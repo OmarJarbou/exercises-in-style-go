@@ -66,9 +66,9 @@ func readRealFile(path string) []byte {
 	return file_data
 }
 
-func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words []string) []WordFreq {
-	return func(stop_words []string) []WordFreq {
-		words_freqs := []WordFreq{}
+func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words []string) map[string]int {
+	return func(stop_words []string) map[string]int {
+		freqs := map[string]int{}
 
 		// Loop over all chars/bytes in the file
 		temp_word := ""
@@ -95,32 +95,25 @@ func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_word
 			}
 
 			if !isStopWord {
-				i := 0
-				for _, item := range words_freqs {
-					if word == item.word {
-						break
-					}
-					i++
-				}
-				if i == len(words_freqs) {
-					words_freqs = append(words_freqs, WordFreq{
-						word: word,
-						freq: 1,
-					})
-				} else {
-					words_freqs[i].freq = words_freqs[i].freq + 1
-				}
+				freqs[word]++
 			}
 		}
 
-		return words_freqs
+		return freqs
 	}
 }
 
-func orderWordsBasedOnFreq(words_freqs []WordFreq) []WordFreq {
+func orderWordsBasedOnFreq(freqs map[string]int) []WordFreq {
+	words_freqs := []WordFreq{}
+	for word, freq := range freqs {
+		words_freqs = append(words_freqs, WordFreq{
+			word: word,
+			freq: freq,
+		})
+	}
 	for i := 0; i < len(words_freqs); i++ {
 		for j := i + 1; j < len(words_freqs); j++ {
-			if words_freqs[j].freq > words_freqs[i].freq {
+			if freqs[words_freqs[j].word] > freqs[words_freqs[i].word] {
 				words_freqs[i], words_freqs[j] = words_freqs[j], words_freqs[i]
 			}
 		}
