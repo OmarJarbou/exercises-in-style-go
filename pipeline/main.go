@@ -14,7 +14,7 @@ type WordFreq struct {
 }
 
 func main() {
-	printWordsAndFreqs(orderWordsBasedOnFreq(extractWordsAndFrequenciesWithoutStopWords(readRealFile("../sample.txt"))(addAsciiCharsToStopWords(normalizeStopWords(readStopWordsFile("../stop_words.txt"))))))
+	printWordsAndFreqs(orderWordsBasedOnFreq(extractWordsAndFrequenciesWithoutStopWords(readRealFile("../sample.txt"))(moveStopWordsToMap(addAsciiCharsToStopWords(normalizeStopWords(readStopWordsFile("../stop_words.txt")))))))
 }
 
 func readStopWordsFile(path string) []string {
@@ -51,6 +51,15 @@ func addAsciiCharsToStopWords(stop_words []string) []string {
 	return stop_words
 }
 
+func moveStopWordsToMap(stop_words []string) map[string]struct{} {
+	stop_words_map := map[string]struct{}{}
+	for _, stop_word := range stop_words {
+		stop_words_map[stop_word] = struct{}{}
+	}
+
+	return stop_words_map
+}
+
 func readRealFile(path string) []byte {
 	real_file, err := os.Open(path)
 	if err != nil {
@@ -66,8 +75,8 @@ func readRealFile(path string) []byte {
 	return file_data
 }
 
-func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words []string) map[string]int {
-	return func(stop_words []string) map[string]int {
+func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words_map map[string]struct{}) map[string]int {
+	return func(stop_words_map map[string]struct{}) map[string]int {
 		freqs := map[string]int{}
 
 		// Loop over all chars/bytes in the file
@@ -88,10 +97,8 @@ func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_word
 			temp_word = ""
 
 			isStopWord := false
-			for _, stop_word := range stop_words {
-				if word_lower == stop_word {
-					isStopWord = true
-				}
+			if _, found := stop_words_map[word_lower]; found {
+				isStopWord = true
 			}
 
 			if !isStopWord {
