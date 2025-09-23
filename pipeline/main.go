@@ -1,0 +1,136 @@
+package main
+
+import (
+	"fmt"
+	"io"
+	"log"
+	"os"
+	"strings"
+)
+
+type WordFreq struct {
+	word string
+	freq int
+}
+
+func main() {
+	printWordsAndFreqs(orderWordsBasedOnFreq(extractWordsAndFrequenciesWithoutStopWords(readRealFile("../sample.txt"))(addAsciiCharsToStopWords(normalizeStopWords(readStopWordsFile("../stop_words.txt"))))))
+}
+
+func readStopWordsFile(path string) []string {
+	stop_words_file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stop_words_data, err := io.ReadAll(stop_words_file)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	stop_words := strings.Split(string(stop_words_data), ",")
+
+	return stop_words
+}
+
+func normalizeStopWords(stop_words []string) []string {
+	for i, stop_word := range stop_words {
+		stop_words[i] = strings.ToLower(stop_word)
+	}
+
+	return stop_words
+}
+
+func addAsciiCharsToStopWords(stop_words []string) []string {
+	ascii := make([]string, 0, 94)
+	for i := 33; i <= 126; i++ {
+		ascii = append(ascii, string(rune(i)))
+	}
+	stop_words = append(stop_words, ascii...)
+
+	return stop_words
+}
+
+func readRealFile(path string) []byte {
+	real_file, err := os.Open(path)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	file_data := make([]byte, 10000000)
+	_, err = real_file.Read(file_data)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return file_data
+}
+
+func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words []string) []WordFreq {
+	return func(stop_words []string) []WordFreq {
+		words_freqs := []WordFreq{}
+
+		// Loop over all chars/bytes in the file
+		temp_word := ""
+		for _, byt := range file_data {
+			// only consider alphabet chars in words
+			if (string(byt) >= "a" && string(byt) <= "z") || (string(byt) >= "A" && string(byt) <= "Z") {
+				temp_word += string(byt)
+				continue
+			}
+
+			// if the char read is not an alphabet then save the word (only if it's not a stop word)
+			word := temp_word
+			if word == "" {
+				continue
+			}
+			word_lower := strings.ToLower(word)
+			temp_word = ""
+
+			isStopWord := false
+			for _, stop_word := range stop_words {
+				if word_lower == stop_word {
+					isStopWord = true
+				}
+			}
+
+			if !isStopWord {
+				i := 0
+				for _, item := range words_freqs {
+					if word == item.word {
+						break
+					}
+					i++
+				}
+				if i == len(words_freqs) {
+					words_freqs = append(words_freqs, WordFreq{
+						word: word,
+						freq: 1,
+					})
+				} else {
+					words_freqs[i].freq = words_freqs[i].freq + 1
+				}
+			}
+		}
+
+		return words_freqs
+	}
+}
+
+func orderWordsBasedOnFreq(words_freqs []WordFreq) []WordFreq {
+	for i := 0; i < len(words_freqs); i++ {
+		for j := i + 1; j < len(words_freqs); j++ {
+			if words_freqs[j].freq > words_freqs[i].freq {
+				words_freqs[i], words_freqs[j] = words_freqs[j], words_freqs[i]
+			}
+		}
+	}
+
+	return words_freqs
+}
+
+func printWordsAndFreqs(words_freqs []WordFreq) {
+	for _, item := range words_freqs {
+		fmt.Printf("%s: %d\n", item.word, item.freq)
+	}
+}
