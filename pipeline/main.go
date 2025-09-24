@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strings"
 )
 
@@ -120,13 +121,10 @@ func orderWordsBasedOnFreq(freqs map[string]int) []WordFreq {
 			freq: freq,
 		})
 	}
-	for i := 0; i < len(words_freqs); i++ {
-		for j := i + 1; j < len(words_freqs); j++ {
-			if freqs[words_freqs[j].word] > freqs[words_freqs[i].word] {
-				words_freqs[i], words_freqs[j] = words_freqs[j], words_freqs[i]
-			}
-		}
-	}
+
+	sort.Slice(words_freqs, func(i, j int) bool {
+		return words_freqs[i].freq > words_freqs[j].freq
+	})
 
 	return words_freqs
 }
