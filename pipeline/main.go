@@ -75,6 +75,8 @@ func readRealFile(path string) []byte {
 	return file_data
 }
 
+// Here I've done currying to transform function with two arguments to sequence
+// of higher order functions each with one single argument
 func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_words_map map[string]struct{}) map[string]int {
 	return func(stop_words_map map[string]struct{}) map[string]int {
 		freqs := map[string]int{}
