@@ -53,8 +53,8 @@ func main() {
 	isStopWord := false
 	temp_word := ""
 	for _, byt := range file_data {
-		// only consider alphabet chars in words
-		if (string(byt) >= "a" && string(byt) <= "z") || (string(byt) >= "A" && string(byt) <= "Z") {
+		// only consider alphanumaric chars in words
+		if (string(byt) >= "a" && string(byt) <= "z") || (string(byt) >= "A" && string(byt) <= "Z") || (string(byt) >= "0" && string(byt) <= "9") {
 			temp_word += string(byt)
 			continue
 		}
