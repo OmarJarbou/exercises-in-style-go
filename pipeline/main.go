@@ -66,9 +66,7 @@ func readRealFile(path string) []byte {
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	file_data := make([]byte, 10000000)
-	_, err = real_file.Read(file_data)
+	file_data, err := io.ReadAll(real_file)
 	if err != nil {
 		log.Fatal(err)
 	}
