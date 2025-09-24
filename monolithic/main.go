@@ -93,7 +93,7 @@ func main() {
 	}
 
 	// print words and thier freqs
-	for _, word := range words {
-		fmt.Printf("%s: %d\n", word, word_freqs[word])
+	for i := 0; i < 25; i++ {
+		fmt.Printf("%s: %d\n", words[i], word_freqs[words[i]])
 	}
 }
