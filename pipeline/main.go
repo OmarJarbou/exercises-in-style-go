@@ -130,7 +130,7 @@ func orderWordsBasedOnFreq(freqs map[string]int) []WordFreq {
 }
 
 func printWordsAndFreqs(words_freqs []WordFreq) {
-	for _, item := range words_freqs {
-		fmt.Printf("%s: %d\n", item.word, item.freq)
+	for i := 0; i < 25; i++ {
+		fmt.Printf("%s: %d\n", words_freqs[i].word, words_freqs[i].freq)
 	}
 }
