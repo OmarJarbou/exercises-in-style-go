@@ -86,7 +86,7 @@ func extractWordsAndFrequenciesWithoutStopWords(file_data []byte) func(stop_word
 		temp_word := ""
 		for _, byt := range file_data {
 			// only consider alphabet chars in words
-			if (string(byt) >= "a" && string(byt) <= "z") || (string(byt) >= "A" && string(byt) <= "Z") {
+			if (string(byt) >= "a" && string(byt) <= "z") || (string(byt) >= "A" && string(byt) <= "Z") || (string(byt) >= "0" && string(byt) <= "9") {
 				temp_word += string(byt)
 				continue
 			}
