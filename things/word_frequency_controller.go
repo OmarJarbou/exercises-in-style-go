@@ -5,10 +5,12 @@ import (
 
 	datastorage "github.com/OmarJarbou/exercises-in-style-go/things/internal/data_storage"
 	stopwords "github.com/OmarJarbou/exercises-in-style-go/things/internal/stop_words"
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
 	wordfrequency "github.com/OmarJarbou/exercises-in-style-go/things/internal/word_frequency"
 )
 
 type WordFrequencyContoller struct {
+	structinfo.StructInfo
 	data_storage_manager datastorage.DataStorageManager
 	stop_words_manager   stopwords.StopWordsManager
 	word_freq_manager    wordfrequency.WordFrequencyManager
@@ -22,6 +24,9 @@ func (wfc *WordFrequencyContoller) initializeWordFrequencyController() {
 	wfc.data_storage_manager.InitializeDataStorageManager()
 	wfc.stop_words_manager.InitializeStopWordManager()
 	wfc.word_freq_manager.InitializeWordFrequencyManager()
+
+	var si structinfo.StructInfo = wfc
+	fmt.Println(structinfo.Info(si))
 }
 
 func (wfc *WordFrequencyContoller) run(stop_words_path, real_file_path string) {

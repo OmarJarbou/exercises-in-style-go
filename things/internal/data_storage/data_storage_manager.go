@@ -1,19 +1,37 @@
 package datastorage
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"reflect"
+
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
 )
 
 type DataStorageManager struct {
+	structinfo.StructInfo
 	file_text string
 	words     []string
+}
+
+func (dsm *DataStorageManager) Info(i interface{}) string {
+	t := reflect.TypeOf(i)
+
+	// If it's a pointer, get the element type
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return "In " + t.Name() + " struct"
 }
 
 func (dsm *DataStorageManager) InitializeDataStorageManager() {
 	dsm.file_text = ""
 	dsm.words = []string{}
+	var si structinfo.StructInfo = dsm
+	fmt.Println(si.Info(si))
 }
 
 func (dsm *DataStorageManager) ReadRealFile(path string) {

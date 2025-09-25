@@ -1,20 +1,38 @@
 package stopwords
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"strings"
+
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
 )
 
 type StopWordsManager struct {
+	structinfo.StructInfo
 	stop_words     []string
 	stop_words_map map[string]struct{}
+}
+
+func (swm *StopWordsManager) Info(i interface{}) string {
+	t := reflect.TypeOf(i)
+
+	// If it's a pointer, get the element type
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return "In " + t.Name() + " struct"
 }
 
 func (swm *StopWordsManager) InitializeStopWordManager() {
 	swm.stop_words = []string{}
 	swm.stop_words_map = map[string]struct{}{}
+	var si structinfo.StructInfo = swm
+	fmt.Println(si.Info(si))
 }
 
 func (swm *StopWordsManager) ReadStopWordsFile(path string) {

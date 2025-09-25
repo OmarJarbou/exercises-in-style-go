@@ -1,6 +1,12 @@
 package wordfrequency
 
-import "sort"
+import (
+	"fmt"
+	"reflect"
+	"sort"
+
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
+)
 
 type WordFreq struct {
 	Word string
@@ -8,13 +14,27 @@ type WordFreq struct {
 }
 
 type WordFrequencyManager struct {
+	structinfo.StructInfo
 	words_freqs     []WordFreq
 	words_freqs_map map[string]int
+}
+
+func (wfm *WordFrequencyManager) Info(i interface{}) string {
+	t := reflect.TypeOf(wfm)
+
+	// If it's a pointer, get the element type
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+
+	return "In " + t.Name() + " struct"
 }
 
 func (wfm *WordFrequencyManager) InitializeWordFrequencyManager() {
 	wfm.words_freqs = []WordFreq{}
 	wfm.words_freqs_map = map[string]int{}
+	var si structinfo.StructInfo = wfm
+	fmt.Println(si.Info(si))
 }
 
 func (wfm *WordFrequencyManager) GetWordsFreqs() []WordFreq {
