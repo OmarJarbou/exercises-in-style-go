@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+	"reflect"
 	"sort"
 )
 
@@ -15,14 +17,46 @@ type WordFreqManager struct {
 	words_freqs_map map[string]int
 }
 
-func (wfm *WordFreqManager) dispatch(message []interface{}) {
-
+func (wfm *WordFreqManager) run() {
+	for !wfm.stop {
+		message := <-wfm.Queue
+		if message[0] == "die" {
+			wfm.stop = true
+		}
+		wfm.dispatch(message)
+	}
 }
 
-func (wfm *WordFreqManager) InitializeWordFrequencyManager(ch chan []interface{}) {
+func (wfm *WordFreqManager) dispatch(message []interface{}) {
+	switch message[0].(string) {
+	case "words":
+		{
+			words, ok := message[1].([]string)
+			if !ok {
+				log.Fatal("when WordFreqManager recieves a filter message, 2nd message argument can only be a slice of strings, which are words to be counted and sorted")
+			}
+
+			word_freq_controller, ok := message[2].(WordFreqController)
+			if !ok {
+				log.Fatal("when WordFreqManager recieves a filter message, 3rd message argument can only be a WordFreqController")
+			}
+
+			wfm.CalculateWordsFreqsForASlice(words)
+			wfm.SortWordsBasedOnFreq()
+
+			top25_msg := []interface{}{"top25", wfm.words_freqs}
+			send(top25_msg, word_freq_controller.Queue)
+		}
+	}
+}
+
+func (wfm *WordFreqManager) InitializeWordFrequencyManager() {
 	wfm.words_freqs = []WordFreq{}
 	wfm.words_freqs_map = map[string]int{}
-	wfm.queue = ch
+	wfm.Queue = make(chan []interface{})
+	wfm.name = reflect.TypeOf(&wfm).Elem().Name()
+	wfm.stop = false
+	go wfm.run()
 }
 
 func (wfm *WordFreqManager) GetWordsFreqs() []WordFreq {

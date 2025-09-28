@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"reflect"
 	"strings"
 )
 
@@ -12,9 +13,53 @@ type StopWordsManager struct {
 	stop_words map[string]struct{}
 }
 
-func (swm *StopWordsManager) InitializeStopWordManager(ch chan []interface{}) {
+func (swm *StopWordsManager) run() {
+	for !swm.stop {
+		message := <-swm.Queue
+		if message[0] == "die" {
+			swm.stop = true
+		}
+		swm.dispatch(message)
+	}
+}
+
+func (swm *StopWordsManager) dispatch(message []interface{}) {
+	switch message[0].(string) {
+	case "init":
+		{
+			swm.ReadStopWordsFile("../stop_words.txt")
+		}
+	case "filter":
+		{
+			words, ok := message[1].([]string)
+			if !ok {
+				log.Fatal("when StopWordsManager recieves a filter message, 2nd message argument can only be a slice of strings, which are words to be filtered")
+			}
+
+			word_freq_controller, ok := message[2].(WordFreqController)
+			if !ok {
+				log.Fatal("when StopWordsManager recieves a filter message, 3rd message argument can only be a WordFreqController")
+			}
+
+			word_freq_manager, ok := message[3].(WordFreqManager)
+			if !ok {
+				log.Fatal("when StopWordsManager recieves a filter message, 4th message argument can only be a WordFreqManager")
+			}
+
+			filtered_words := swm.RemoveStopWordsFromASlice(words)
+
+			words_msg := []interface{}{"words", filtered_words, word_freq_controller}
+			send(words_msg, word_freq_manager.Queue)
+		}
+	}
+}
+
+func (swm *StopWordsManager) InitializeStopWordManager() {
 	swm.stop_words = map[string]struct{}{}
-	swm.queue = ch
+	swm.Queue = make(chan []interface{})
+	swm.name = reflect.TypeOf(&swm).Elem().Name()
+	swm.stop = false
+	go swm.run()
 }
 
 func (swm *StopWordsManager) ReadStopWordsFile(path string) {
