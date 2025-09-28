@@ -1,0 +1,12 @@
+IN THIS STYLE, we want to model and store the data so that it is
+amenable to future retrieval in all sorts of ways. For the term-frequency
+task, if it’s done several times, we might not always want to read and parse
+the file in its raw form every time we want to compute the term frequency.
+Also, we might want to mine for more facts about the books, not just term
+frequencies. So, instead of consuming the data in its raw form, this style en-
+courages using alternative representations of the input data that make it easier
+to mine, now and in the future. In one approach to such a goal, the types of
+data (domains) that need to be stored are identified, and pieces of concrete
+data are associated with those domains, forming tables. With an unambiguous
+entity-relationship model in place, we can then fill in the tables with data, so
+to retrieve portions of it using declarative queries.
