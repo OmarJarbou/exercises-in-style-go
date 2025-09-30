@@ -1,0 +1,424 @@
+28.2 A PROGRAM IN THIS STYLE
+#!/usr/bin/env python
+import sys, re, operator, string
+from threading import Thread
+from Queue import Queue
+class ActiveWFObject(Thread):
+def __init__(self):
+Thread.__init__(self)
+self.name = str(type(self))
+self.queue = Queue()
+self._stop = False
+self.start()
+def run(self):
+while not self._stop:
+message = self.queue.get()
+self._dispatch(message)
+if message[0] == ’die’:
+self._stop = True
+def send(receiver, message):
+receiver.queue.put(message)
+class DataStorageManager(ActiveWFObject):
+""" Models the contents of the file """
+_data = ’’
+def _dispatch(self, message):
+if message[0] == ’init’:
+self._init(message[1:])
+elif message[0] == ’send_word_freqs’:
+self._process_words(message[1:])
+else:
+# forward
+send(self._stop_word_manager, message)
+def _init(self, message):
+path_to_file = message[0]
+self._stop_word_manager = message[1]
+with open(path_to_file) as f:
+self._data = f.read()
+pattern = re.compile(’[\W_]+’)
+self._data = pattern.sub(’ ’, self._data).lower()
+def _process_words(self, message):
+recipient = message[0]
+data_str = ’’.join(self._data)
+words = data_str.split()
+for w in words:
+send(self._stop_word_manager, [’filter’, w])
+send(self._stop_word_manager, [’top25’, recipient])
+class StopWordManager(ActiveWFObject):
+""" Models the stop word filter """
+_stop_words = []
+def _dispatch(self, message):
+if message[0] == ’init’:
+self._init(message[1:])
+elif message[0] == ’filter’:
+return self._filter(message[1:])
+else:
+# forward
+send(self._word_freqs_manager, message)
+def _init(self, message):
+with open(’../stop_words.txt’) as f:
+self._stop_words = f.read().split(’,’)
+self._stop_words.extend(list(string.ascii_lowercase))
+self._word_freqs_manager = message[0]
+def _filter(self, message):
+word = message[0]
+if word not in self._stop_words:
+send(self._word_freqs_manager, [’word’, word])
+class WordFrequencyManager(ActiveWFObject):
+""" Keeps the word frequency data """
+_word_freqs = {}
+def _dispatch(self, message):
+if message[0] == ’word’:
+self._increment_count(message[1:])
+elif message[0] == ’top25’:
+self._top25(message[1:])
+def _increment_count(self, message):
+word = message[0]
+if word in self._word_freqs:
+self._word_freqs[word] += 1
+else:
+self._word_freqs[word] = 1
+def _top25(self, message):
+recipient = message[0]
+freqs_sorted = sorted(self._word_freqs.iteritems(), key=
+operator.itemgetter(1), reverse=True)
+send(recipient, [’top25’, freqs_sorted])
+class WordFrequencyController(ActiveWFObject):
+def _dispatch(self, message):
+if message[0] == ’run’:
+self._run(message[1:])
+elif message[0] == ’top25’:
+self._display(message[1:])
+else:
+raise Exception("Message not understood " + message
+[0])
+def _run(self, message):
+self._storage_manager = message[0]
+send(self._storage_manager, [’send_word_freqs’, self])
+def _display(self, message):
+word_freqs = message[0]
+for (w, f) in word_freqs[0:25]:
+print w, ’ - ’, f
+send(self._storage_manager, [’die’])
+self._stop = True
+#
+# The main function
+#
+word_freq_manager = WordFrequencyManager()
+stop_word_manager = StopWordManager()
+send(stop_word_manager, [’init’, word_freq_manager])
+storage_manager = DataStorageManager()
+send(storage_manager, [’init’, sys.argv[1], stop_word_manager])
+wfcontroller = WordFrequencyController()
+send(wfcontroller, [’run’, storage_manager])
+# Wait for the active objects to finish
+[t.join() for t in [word_freq_manager, stop_word_manager,
+storage_manager, wfcontroller]]
+28.3 COMMENTARY
+IN THIS STYLE is a direct extension of the Letterbox style, but where the
+objects have their own threads. These objects are also known as active
+objects or actors. Objects interact with each other by sending messages that
+are placed in queues. Each active object performs a continuous loop over its
+queue, processing one message at a time, and blocking if the queue is empty.
+The example program starts by defining a class, ActiveWFObject (lines
+#7–20), that implements generic behavior of active objects. Active objects in-
+herit from Thread (line #7), a Python class that supports concurrent threads
+of execution. This means that their run method (lines #15–20) is spawned
+concurrently when the thread’s start method is called in line #13. Each ac-
+tive object has a name (line #10) and a queue (line #11). The Queue object
+in Python implements a queue data type where threads that call the get op-
+eration may be blocked if the queue is empty. The run method (lines #15–20)
+runs an infinite loop that takes one message from the queue, possibly blocking
+if the queue is empty, and that dispatches that message. One special message
+die breaks the loop and makes the thread stop (lines #19–20). Any active
+application objects inherit the behavior from ActiveWFObject.
+Lines #22–23 define a function for sending a message to a receiver. In this
+case, sending a message means placing it in the queue of the receiver (line
+#23).
+Next, we have the four active application objects. In this program, we
+have followed the same design as that used in the Letterbox style (Chapter
+11), so the classes and their roles are exactly the same: there is a data storage
+entity (lines #25–52), a stop word entity (lines #54–76), an entity for keeping
+word frequency counts (lines #78–98) and the application controller (lines
+#100–119). All of these inherit from ActiveWFObject, meaning that any
+instantiation of these classes spawns new threads independently running the
+run method (lines #15–20).
+In the main method (lines #124–136), we instantiate one object of each
+class, so when the application runs, it results in 4 threads plus the main thread.
+The main thread simply blocks until the active objects’ threads all stop (line
+#136).
+A message in our program is simply a list with any number of elements
+that has the message tag in its first position. Object references can be sent
+via messages. For example, the ’init’ message that the main thread sends
+to the StopWordManager object is [’init’, word freq manager]
+(line #127), where word freq manager is the reference to another active
+object, an instance of WordFrequencyManager; the ’init’ message that
+the main thread sends to the DataStorageManager object is [’init’,
+sys.argv[1], stop word manager].
+Let’s look into each active application object in more detail, and the mes-
+sages that are exchanged among them. The application starts by sending the
+’init’ message to both the stop word manager (line #127) and the data stor-
+age manager (line #130). These messages are dispatched by the corresponding
+active objects’ threads (line #18), which results in the execution of the cor-
+responding dispatch methods – lines #58–65 and lines #29–36, respectively.
+In both cases, the ’init’ messages result in files being read, and its data pro-
+cessed in some form. Next, the main thread sends the ’run’ message to the
+application controller (line #133), and this triggers the execution of the term
+frequency task over the input data. Let’s see how.
+Upon reception of the ’run’ message, the word frequency controller stores
+the reference for the data storage object (line #111) and sends it the message
+’send word freqs’ with a reference to itself (line #112). In turn, when the data
+storage object receives ’send word freqs’ (line #32), it starts processing the
+words (lines #46–52), which results in sending each word to the stop word
+manager object, along with the message ’filter’ (lines #50–51). Upon receiving
+’filter’ messages, the stop word manager object filters the word (lines #73–76),
+which results in sending the non-stop words along with the message ’word’
+to the word frequency manager (lines #75–76). In turn, the word frequency
+manager object increments the counts for each word received via the message
+’word’ (lines #88–93).
+When the data storage manager runs out of words, it sends the message
+’top25’ to the stop word manager, along with the reference to the recipient
+(line #52) – remember the recipient is the application controller (see line
+#112). The stop word manager, however, does not understand that message,
+as it is not one of the expected messages in its dispatch method (lines #58–
+65). Its dispatch method is implemented so that any message that is not
+explicitly expected is simply forwarded to the word frequency manager object,
+so the ’top25’ message is forwarded. In turn, the word frequency manager
+understands the ’top25’ message (line #85); upon its reception, it sends the
+sorted list of word frequencies to the recipient (lines #95–98) along with the
+message ’top25’. The recipient, the application controller, upon receiving the
+’top25’ message (line #105) prints the information on the screen (lines #115–
+117), and sends the ’die’ message down the chain of objects, which makes
+them all stop (lines #18–19). At that point, all threads are finished, the main
+thread is unblocked, and the application ends.
+Unlike the Letterbox style, the Actors style is inherently asynchronous,
+with blocking queues serving as the interfaces between the agents. The calling
+objects place messages in queues of the callees and continue without waiting
+for the dispatch of those messages.
+28.4 THIS STYLE IN SYSTEMS DESIGN
+This style is a natural match for large distributed systems: without distributed
+shared memory, components in different nodes of a network interact by sending
+messages to each other. There are a few ways of designing message-based
+systems; one of them, known as point-to-point messaging, where the message
+has a single, well-known receiver, maps directly to this style. The Java Message
+Service (JMS) framework is a popular framework that supports this style,
+along with the publish-subscribe style described in the previous chapter. In
+the mobile arena, the Google Cloud Messaging for Android is another example
+of this style in action at planetary scale.
+But this style is not just for large distributed systems. Components that
+consist of a single multi-threaded process also benefit from the application of
+this style – threaded objects with queues – as a way to limit the amount of
+internal concurrency.
+28.5 HISTORICAL NOTES
+This style targets programming for concurrent and distributed applications.
+The general idea is as old as the first operating systems that supported con-
+currency, and it emerged in several forms during the 1970s. Message-passing
+processes had been known to be a flexible way to structure operating systems;
+from the beginning, this model has co-existed with the alternative shared
+memory model. In the mid 1980s, Gul Agha formalized the model, giving
+these processes with queues the general name of Actors.
+28.6 FURTHER READING
+Agha, G. (1985). Actors: A model of concurrent computation in distributed
+systems. Doctoral dissertation, MIT Press.
+Synopsis: This is the original work proposing the Actor model for con-
+current programming.
+Lauer, H. and Needham, R. (1978). On the duality of operating system struc-
+tures. Second International Symposium on Operating Systems.
+Synopsis: Long before concurrent programming was its own topic, re-
+searchers and developers were well aware of the design tradeoffs con-
+cerning communication between different units of execution. This paper
+presents a nice overview of message-passing vs. shared memory models.
+28.7 GLOSSARY
+Actor: An object with its own thread of execution, or a process node on a
+network. Actors have a queue to receive messages, and interact with each
+other only by sending messages.
+Asynchronous request: A request where the requester doesn’t wait for the
+reply, and where the reply, if any, arrives at some later point in time.
+Message: A data structure carrying information from a sender to a known
+receiver, possibly transported via a network.
+28.8 EXERCISES
+28.1 Another language. Implement the example program in another language,
+but preserve the style.
+28.2 3+1 Threads. Write another version of the example program also in the
+Actors style, but with only three active objects plus the main thread.
+28.3 Lazy Rivers, take 2. Languages like Java don’t have the yield state-
+ment explained in the Lazy Rivers style (Chapter 27). Implement the
+data-centric program in that chapter without using yield, and using
+the Actors style.
+28.4 A different task. Write one of the tasks proposed in the Prologue using
+this style.
+30.2 A PROGRAM IN THIS STYLE
+#!/usr/bin/env python
+import sys, re, operator, string
+#
+# Functions for map reduce
+#
+def partition(data_str, nlines):
+"""
+Partitions the input data_str (a big string)
+into chunks of nlines.
+"""
+lines = data_str.split(’\n’)
+for i in xrange(0, len(lines), nlines):
+yield ’\n’.join(lines[i:i+nlines])
+def split_words(data_str):
+"""
+Takes a string, returns a list of pairs (word, 1),
+one for each word in the input, so
+[(w1, 1), (w2, 1), ..., (wn, 1)]
+"""
+def _scan(str_data):
+pattern = re.compile(’[\W_]+’)
+return pattern.sub(’ ’, str_data).lower().split()
+def _remove_stop_words(word_list):
+with open(’../stop_words.txt’) as f:
+stop_words = f.read().split(’,’)
+stop_words.extend(list(string.ascii_lowercase))
+return [w for w in word_list if not w in stop_words]
+# The actual work of splitting the input into words
+result = []
+words = _remove_stop_words(_scan(data_str))
+for w in words:
+result.append((w, 1))
+return result
+def count_words(pairs_list_1, pairs_list_2):
+"""
+Takes two lists of pairs of the form
+[(w1, 1), ...]
+and returns a list of pairs [(w1, frequency), ...],
+where frequency is the sum of all the reported occurrences
+"""
+mapping = dict((k, v) for k, v in pairs_list_1)
+for p in pairs_list_2:
+if p[0] in mapping:
+mapping[p[0]] += p[1]
+else:
+mapping[p[0]] = 1
+return mapping.items()
+#
+30.3 COMMENTARY
+IN THIS STYLE, the problem’s input data is divided into chunks, each
+chunk is processed independently of the others, possibly in parallel, and the
+results are combined at the end. The Map Reduce style, commonly known as
+MapReduce, comprises two key abstractions: (1) a map function takes chunks
+of data, as well as a function, as arguments, and applies that function to each
+chunk independently, producing a collection of results; (2) a reduce function
+takes a collection of results as well as a function, as arguments, and applies that
+function to the collection of results in order to extract some global knowledge
+out of that collection.
+The key observation for the term frequency task is that counting words
+can be done in a divide-and-conquer manner: we can count words on smaller
+portions of the input file (e.g. each page of the book), and then combine those
+counts. Not all problems can be done in this manner, but term frequency can.
+When this is feasible, the MapReduce solution can be very effective for very
+large input data, with the use of several processing units in parallel.
+Let’s look at the example program, starting at the bottom, lines #68–73.
+In line #68, the main block starts by reading the input file, partitioning it into
+blocks of 200 lines; those blocks are given as the second parameter to Python’s
+map function, which takes as first parameter a worker function split words.
+The result of that map is a list of partial word counts, one from each worker
+function, which we called splits. We then prepare those splits for reduction
+(line #69) – more about this later. Once ready, the splits are given as the
+second argument to Python’s reduce function, which takes as first argument
+the worker function count words (line #70). The result of that application
+is a list of pairs, each corresponding to a word and corresponding frequency.
+Let’s now look into the three main functions – partition, split words
+and count words – in detail.
+The partition function (lines #7–14) is a generator that takes a multi-
+line string and a number of lines as inputs, and generates strings with the
+requested number of lines. So, for example, Pride and Prejudice has 13,426
+lines, so we are dividing it into 68 blocks of 200 lines (see line #68), with the
+last block having less than 200 lines. Note that the function yield s, rather than
+returns, blocks. As seen before, this is a lazy way of processing input data,
+but it’s functionally equivalent to returning the complete list of 68 blocks.
+The split words function (lines #16–37) takes a multi-line string – one
+block of 200 lines, as used in line #68 – and processes that block. The pro-
+cessing is similar to what we have seen before. However, this function returns
+its data in a very different format than that seen in other chapters for equiv-
+alent functions. After producing the list of non-stop words (lines #22–34), it
+iterates through that list constructing a list of pairs; the first element of each
+pair is a word occurrence and the second is the number 1, meaning “this word,
+one occurrence.” For Pride and Prejudice’s first block, the first few entries in
+the resulting list look like this:
+[(’project’,1),(’gutenberg’,1),(’ebook’,1),
+(’pride’,1),(’prejudice’,1), (’jane’,1),
+(’austen’,1),(’ebook’,1),...]
+This seems a rather strange data structure, but it is common for MapRe-
+duce applications to make worker functions do as little computation as possi-
+ble. In this case, we aren’t even counting the number of occurrences of words
+in each block; we are simply transforming the block of words into a data
+structure that supports a very simple counting procedure later on.
+To recapitulate, line #68 results in a list of these data, one for each of the
+68 blocks.
+The count words function (lines #39–52) is the reducing worker used
+as the first argument to reduce in line #70. In Python, reducer functions
+have two arguments, which are meant to be merged in some way, and return
+one single value at the end. Our function takes two of the data structures
+described above: the first one is the result of the previous reduction, if any,
+starting with the empty list (line #69); the second is the new split to be
+merged. count words starts by producing a dictionary out of the first list of
+pairs (line #46); it then iterates through the second list of pairs, incrementing
+the corresponding word counts in the dictionary (lines #47–51). At the end,
+it returns the dictionary as a list of key-value pairs. This return value is then
+fed into the next reduction, and the process continues until there are no more
+splits.
+30.4 THIS STYLE IN SYSTEMS DESIGN
+MapReduce is a naturally good fit for data-intensive applications where the
+data can be partitioned and processed independently, and the partial results
+recombined at the end. These applications benefit from the use of many com-
+puting units – cores, servers – that perform the mapping and reducing func-
+tions in parallel, therefore reducing the processing time by several orders of
+magnitude than that of a single processor. The next chapter looks into these
+variations of MapReduce in more detail.
+Our example program, however, does not employ threads or concurrency.
+The example is more in line with the original LISP MapReduce. Language
+processors can implement the several applications of the mapped function in
+parallel, but that is not what Python does. 1 Nevertheless, in this book this
+style is grouped with the styles for concurrent programming, because those
+are the applications that gain the most from this style.
+30.5 HISTORICAL NOTES
+The concept of mapping and reducing sequences, as currently used, was in-
+cluded in Common LISP in the late 1970s. However, those concepts predate
+Common LISP by at least a decade. A version of map was present in Mc-
+Carthy’s LISP system in 1960, under the name of maplist; this function
+took another function as argument that was then mapped onto each succes-
+sive tail of a list argument, rather than onto each element. By the mid-1960s
+many dialiects of LISP had mapcar, which maps the function onto each ele-
+ment. Reduce was known to LISP programmers in the early 1970s. Both map
+and reduce were present in APL for built-in scalar operations.
+Several decades later, in the early 2000s, a variation of this model was
+made popular by Google, who applied it at the data center scale. The model
+was then adopted more widely with the emergence of open source MapReduce
+frameworks such as Hadoop.
+30.6 FURTHER READING
+MAC LISP (1967). MIT A.I. Memo No.116A. Available at:
+http://www.softwarepreservation.org/projects/LISP/MIT/
+AIM-116A-White-Interim User Guide.pdf
+Synopsis: This is the manual for one of the flavors of LISP, the MAC
+LISP, listing the functions available in that programming system. The
+map functions are featured prominently.
+Steele, G. (1984). Common LISP the Language. Chapter 14.2: Concatenating,
+Mapping and Reducing Sequences. Digital Press. Available at:
+http://www.cs.cmu.edu/Groups/AI/html/cltl/clm/clm.html
+Synopsis: Common LISP had both map and reduce operations.
+30.7 GLOSSARY
+Map: A function takes blocks of data, as well as a function, as arguments, and
+applies that function to each block independently, producing a collection
+of results.
+Reduce: A function takes a collection of results as well as a function, as
+arguments, and applies that function to the current merged result and
+the next result in the collection in order to extract some global knowledge
+out of that collection.
+30.8 EXERCISES
+30.1 Another language. Implement the example program in another language,
+but preserve the style.
+30.2 Partial counts. Change the example program so that split words
+(lines #16–37) produces a list of partial word counts. Are there any
+advantages in doing this vs. doing what the original example program
+does?
+30.3 Concurrency. Python’s map and reduce functions are not multi-
+threaded. Write a concurrent map function that takes a function and
+a list of blocks and launches a thread for each function application. Use
+your function instead of map in line #68. It’s ok to make a few changes
+to the program, but try to minimize those changes.
+30.4 A different task. Write one of the tasks proposed in the Prologue using
+this style.
