@@ -43,4 +43,4 @@ I didn't add unit tests for other functions, because they are either trivial or 
 ## Running
 
 ```bash
-go run . 'path_to_project' 'path_to_file' 'lines_per_page (must be integer)'
+go run 'path_to_project' 'path_to_file' 'lines_per_page (must be integer)'
