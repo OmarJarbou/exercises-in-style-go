@@ -40,7 +40,7 @@ func (dsm *DataStorageManager) FilterLinesCharacters() {
 			if (string(char) >= "a" && string(char) <= "z") || (string(char) >= "A" && string(char) <= "Z") {
 				filtered_line += string(char)
 			} else {
-				if len(filtered_line) > 0 {
+				if len(filtered_line) > 0 { // add a space instead of the non-alphabet char, only if the filtered_line not empty
 					if string(filtered_line[len(filtered_line)-1]) != " " {
 						filtered_line += " "
 					}
