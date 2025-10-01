@@ -37,6 +37,14 @@ The main idea of this style is to **subdivide the computational task into logica
 8. **Output**  
    - Print the words with their frequencies by the `WordFrequencyContoller` instance itself.
 
+**Different implementations for StructInfo's Info function:**
+   - I have made StructInfo interface that has Info function that takes some instance and return info about it.
+   - I have made default implementation for Info under the interface.
+   - All `DataStorageManager`, `StopWordsManager`, and `WordFrequencyManager` instances implements the interface by implementing its Info method.
+   - Any call to the method with instance from the one of the mentioned structs as a parameter AND AS RECIEVER (i.e. for example (dsm *DataStorageManager) is a reciever for a function) will result in calling the implemented Info method, not the default one.
+   - While `WordFrequencyContoller`'s instance is calling the default one (no implementation for Info in WordFrequencyContoller), by passing itself to the function.
+
+
 ---
 
 ## Why Things Style?

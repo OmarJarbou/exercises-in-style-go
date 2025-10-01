@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 
-	datastorage "github.com/OmarJarbou/exercises-in-style-go/things/internal/data_storage"
-	stopwords "github.com/OmarJarbou/exercises-in-style-go/things/internal/stop_words"
-	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
-	wordfrequency "github.com/OmarJarbou/exercises-in-style-go/things/internal/word_frequency"
+	datastorage "github.com/OmarJarbou/exercises-in-style-go/things/termfreq/internal/data_storage"
+	stopwords "github.com/OmarJarbou/exercises-in-style-go/things/termfreq/internal/stop_words"
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/termfreq/internal/struct_info"
+	wordfrequency "github.com/OmarJarbou/exercises-in-style-go/things/termfreq/internal/word_frequency"
 )
 
 type WordFrequencyContoller struct {

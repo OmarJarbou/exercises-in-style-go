@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"strings"
 
-	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/internal/struct_info"
+	structinfo "github.com/OmarJarbou/exercises-in-style-go/things/termfreq/internal/struct_info"
 )
 
 type StopWordsManager struct {
