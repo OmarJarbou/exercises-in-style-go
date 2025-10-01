@@ -30,7 +30,10 @@ func (wic *WordIndexController) run(file_path string, lines_per_page int) error 
 	wic.data_storage_manager.FilterLinesCharacters()
 	lines := wic.data_storage_manager.GetLines()
 
-	wic.word_index_manager.ExtractWordsAndIndexes(lines, lines_per_page)
+	err = wic.word_index_manager.ExtractWordsAndIndexes(lines, lines_per_page)
+	if err != nil {
+		return err
+	}
 	wic.word_index_manager.SortListAlphabetically()
 	words_indexes := wic.word_index_manager.GetWordsIndexes()
 

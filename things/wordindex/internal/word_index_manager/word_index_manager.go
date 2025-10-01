@@ -1,6 +1,7 @@
 package wordindexmanager
 
 import (
+	"errors"
 	"sort"
 	"strings"
 )
@@ -22,22 +23,29 @@ func (wim *WordindexManager) GetWordsIndexes() []WordIndex {
 	return wim.words_indexes
 }
 
-func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_page int) {
+func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_page int) error {
+	if lines_per_page < 1 {
+		return errors.New("lines per page cannot be less than 1")
+	}
+
 	words_indexes_map := map[string][]int{}
 
 	index := 1
 	line_number := 1
 	for _, line := range lines {
-		words := strings.Split(line, " ")
+		trimmed := strings.TrimSpace(line)
+		words := strings.Split(trimmed, " ")
 		for _, word := range words {
-			if _, ok := words_indexes_map[word]; !ok {
-				words_indexes_map[word] = []int{}
+			if word != "" {
+				if _, ok := words_indexes_map[word]; !ok {
+					words_indexes_map[word] = []int{}
+				}
+				words_indexes_map[word] = append(words_indexes_map[word], index)
 			}
-			words_indexes_map[word] = append(words_indexes_map[word], index)
 		}
 		if line_number == lines_per_page {
 			index++
-			line_number = 1
+			line_number = 0
 		}
 		line_number++
 	}
@@ -48,6 +56,8 @@ func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_pa
 			Indexes: indexes,
 		})
 	}
+
+	return nil
 }
 
 func (wim *WordindexManager) SortListAlphabetically() {
