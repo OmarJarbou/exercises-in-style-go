@@ -38,6 +38,11 @@ func main() {
 	}
 	stop_words = append(stop_words, ascii...)
 
+	stop_words_map := map[string]struct{}{}
+	for _, stop_word := range stop_words {
+		stop_words_map[stop_word] = struct{}{}
+	}
+
 	real_file, err := os.Open("../sample.txt")
 	if err != nil {
 		log.Fatal(err)
@@ -50,7 +55,6 @@ func main() {
 	}
 
 	// Loop over all chars/bytes in the file
-	isStopWord := false
 	temp_word := ""
 	for _, byt := range file_data {
 		// only consider alphanumaric chars in words
@@ -67,19 +71,12 @@ func main() {
 		word_lower := strings.ToLower(word)
 		temp_word = ""
 
-		for _, stop_word := range stop_words {
-			if word_lower == stop_word {
-				isStopWord = true
-				break
-			}
-		}
-		if !isStopWord {
+		if _, ok := stop_words_map[word_lower]; !ok {
 			word_freqs[word]++
 			if word_freqs[word] == 1 {
 				words = append(words, word)
 			}
 		}
-		isStopWord = false
 	}
 
 	// MAP IN GO IS UNORDERED; THATS WHY WE DO THIS STEP.
