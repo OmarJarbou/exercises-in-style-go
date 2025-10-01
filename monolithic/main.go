@@ -59,7 +59,7 @@ func main() {
 			continue
 		}
 
-		// if the char read is not an alphabet then save the word (only if it's not a stop word)
+		// if the char read is not an alphanumaric then save the word (only if it's not a stop word)
 		word := temp_word
 		if word == "" {
 			continue
