@@ -25,6 +25,11 @@ The main idea of this style is to **subdivide the computational task into logica
 
 8. Print words and their corresponding page indexes without duplicates if the word occured less than 100 times.
 
+**Testing:**
+Added test functions to test the functionality and output correctness of `ExtractWordsAndIndexes` & `SortListAlphabetically` in *wordindexmanager* package, and `FilterLinesCharacters` in *datastorage* package.
+
+I didn't add unit tests for other functions, because they are either trivial or not unit testable (like those impure functions that contains IO and depends on the data comes from it).
+
 ---
 
 ## Why Things Style?
