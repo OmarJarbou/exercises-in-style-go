@@ -31,4 +31,4 @@ This project implements the **term frequency** task in **pipeline style**, by fo
 ## Running
 
 ```bash
-go run .
+go run 'path_to_project' 'path_to_file' 'path_to_stop_words_file'
