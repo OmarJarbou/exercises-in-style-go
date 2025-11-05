@@ -19,7 +19,7 @@ func main() {
 		log.Fatal("Three argument required: go run 'path_to_project' 'path_to_file' 'path_to_stop_words_file'")
 		return
 	}
-	printWordsAndFreqs(orderWordsBasedOnFreq(extractWordsAndFrequenciesWithoutStopWords(readRealFile(os.Args[1]))(moveStopWordsToMap(addAsciiCharsToStopWords(normalizeStopWords(readStopWordsFile(os.Args[1])))))))
+	printWordsAndFreqs(orderWordsBasedOnFreq(extractWordsAndFrequenciesWithoutStopWords(readRealFile(os.Args[1]))(moveStopWordsToMap(addAsciiCharsToStopWords(normalizeStopWords(readStopWordsFile(os.Args[2])))))))
 }
 
 func readStopWordsFile(path string) []string {
