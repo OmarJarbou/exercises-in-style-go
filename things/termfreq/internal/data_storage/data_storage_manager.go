@@ -11,7 +11,6 @@ import (
 )
 
 type DataStorageManager struct {
-	structinfo.StructInfo
 	file_text string
 	words     []string
 }
@@ -31,6 +30,10 @@ func (dsm *DataStorageManager) InitializeDataStorageManager() {
 	dsm.file_text = ""
 	dsm.words = []string{}
 	var si structinfo.StructInfo = dsm
+	// here we didn't have to embed structinfo.StructInfo in DataStorageManager definition;
+	// because DataStorageManager already provide an implementation for Info(). So Basicly
+	// DataStorageManager is already implementing StructInfo,
+	// And we won't get an error on "var si structinfo.StructInfo = wfc"
 	fmt.Println(si.Info(si))
 }
 

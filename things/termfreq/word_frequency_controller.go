@@ -11,6 +11,10 @@ import (
 
 type WordFrequencyContoller struct {
 	structinfo.StructInfo
+	// we have to put it so we can use the default implementation of Info(); because
+	// WordFrequencyContoller does not provide an implementation for Info(). So Basicly
+	// without this line, WordFrequencyContoller won't be implementing StructInfo,
+	// And we will get an error on "var si structinfo.StructInfo = wfc"
 	data_storage_manager datastorage.DataStorageManager
 	stop_words_manager   stopwords.StopWordsManager
 	word_freq_manager    wordfrequency.WordFrequencyManager

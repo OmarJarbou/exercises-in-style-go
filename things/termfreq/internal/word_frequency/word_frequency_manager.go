@@ -14,7 +14,6 @@ type WordFreq struct {
 }
 
 type WordFrequencyManager struct {
-	structinfo.StructInfo
 	words_freqs     []WordFreq
 	words_freqs_map map[string]int
 }

@@ -12,7 +12,6 @@ import (
 )
 
 type StopWordsManager struct {
-	structinfo.StructInfo
 	stop_words     []string
 	stop_words_map map[string]struct{}
 }
