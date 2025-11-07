@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 
 	datastorage "github.com/OmarJarbou/exercises-in-style-go/things/wordindex/internal/data_storage"
@@ -38,22 +37,8 @@ func (wic *WordIndexController) run(file_path string, lines_per_page int) error 
 	words_indexes := wic.word_index_manager.GetWordsIndexes()
 
 	for _, w := range words_indexes {
-		if len(w.Indexes) < 100 {
-			// Use a map as a set to deduplicate
-			unique := make(map[int]struct{})
-			for _, index := range w.Indexes {
-				unique[index] = struct{}{}
-			}
-
-			// Convert map keys back into a slice for sorting
-			deduped := make([]int, 0, len(unique))
-			for index := range unique {
-				deduped = append(deduped, index)
-			}
-
-			sort.Ints(deduped)
-
-			fmt.Println(w.Word, "(#Occurrences: "+strconv.Itoa(len(w.Indexes))+") - ", deduped)
+		if w.Occurrences < 100 {
+			fmt.Println(w.Word, "(#Occurrences: "+strconv.Itoa(w.Occurrences)+") - ", w.Indexes)
 		}
 	}
 

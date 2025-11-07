@@ -7,8 +7,9 @@ import (
 )
 
 type WordIndex struct {
-	Word    string
-	Indexes []int
+	Word        string
+	Occurrences int
+	Indexes     []int
 }
 
 type WordindexManager struct {
@@ -28,7 +29,8 @@ func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_pa
 		return errors.New("lines per page cannot be less than 1")
 	}
 
-	words_indexes_map := map[string][]int{}
+	words_indexes_map := map[string]map[int]struct{}{}
+	words_occurences_map := map[string]int{}
 
 	index := 1
 	line_number := 1
@@ -38,9 +40,10 @@ func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_pa
 		for _, word := range words {
 			if word != "" {
 				if _, ok := words_indexes_map[word]; !ok {
-					words_indexes_map[word] = []int{}
+					words_indexes_map[word] = map[int]struct{}{}
 				}
-				words_indexes_map[word] = append(words_indexes_map[word], index)
+				words_indexes_map[word][index] = struct{}{}
+				words_occurences_map[word]++
 			}
 		}
 		if line_number == lines_per_page {
@@ -51,9 +54,16 @@ func (wim *WordindexManager) ExtractWordsAndIndexes(lines []string, lines_per_pa
 	}
 
 	for word, indexes := range words_indexes_map {
+		indexes_slice := []int{}
+		for index := range indexes {
+			indexes_slice = append(indexes_slice, index)
+		}
+		sort.Ints(indexes_slice)
+
 		wim.words_indexes = append(wim.words_indexes, WordIndex{
-			Word:    word,
-			Indexes: indexes,
+			Word:        word,
+			Occurrences: words_occurences_map[word],
+			Indexes:     indexes_slice,
 		})
 	}
 
