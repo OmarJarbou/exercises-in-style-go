@@ -8,6 +8,7 @@ CREATE TABLE words(
     CONSTRAINT fk_documents_words
     FOREIGN KEY (document_id)
     REFERENCES documents(id)
+    ON DELETE CASCADE
 );
 
 -- +goose Down

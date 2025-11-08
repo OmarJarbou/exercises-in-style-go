@@ -8,6 +8,7 @@ CREATE TABLE characters(
     CONSTRAINT fk_words_characters
     FOREIGN KEY (word_id)
     REFERENCES words(id)
+    ON DELETE CASCADE
 );
 
 -- +goose Down
