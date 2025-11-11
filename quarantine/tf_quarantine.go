@@ -27,7 +27,11 @@ func (tfq *TFQuarantine) execute(input interface{}) interface{} {
 // THE REAL CAUSE:
 
 // this function won't work with us; because even if it recieved a function
-// for example (func() string), ok will be false also
+// Go does not allow function-type assertions between different signatures — even
+// if the return type is "compatible" (like string being assignable to interface{} in value land).
+// Function types in Go must match exactly in parameter and return types for type
+// assertions or assignments to succeed.
+
 // func (tfq *TFQuarantine) callable(value interface{}) interface{} {
 // 	if fn, ok := value.(func() interface{}); ok { // if function_input is a function, then call it instead of passing it as a parameter
 // 		return fn()
