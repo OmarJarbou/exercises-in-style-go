@@ -20,10 +20,10 @@ func main() {
 	word_freq_manager.InitializeWordFrequencyManager()
 	word_freq_controller.initializeWordFrequencyController()
 
-	init_msg1 := []interface{}{"init", word_freq_manager}
+	init_msg1 := []interface{}{"init"}
 	send(init_msg1, stop_words_manager.Queue)
 
-	init_msg2 := []interface{}{"init", os.Args[1], stop_words_manager}
+	init_msg2 := []interface{}{"init", os.Args[1]}
 	send(init_msg2, data_storage_manager.Queue)
 
 	run_msg := []interface{}{"run", data_storage_manager, stop_words_manager, word_freq_manager}

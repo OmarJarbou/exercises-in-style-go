@@ -24,7 +24,7 @@ The key idea of the Actor model is to represent each component as an independent
 ### Flow of Messages
 The system operates entirely by exchanging messages between actors:
 
-1. `main` → `WordFreqManager` and `StopWordsManager`: send `init` messages to load the required resources (file content and stop words).
+1. `main` → `DataStorageManager` and `StopWordsManager`: send `init` messages to load the required resources (file content and stop words).
 
 2. `main` → `WordFreqController`: send `run` message so it can store references to other actors and kick off the workflow by sending send_word_freqs to DataStorageManager.
 
