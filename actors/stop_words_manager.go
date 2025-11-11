@@ -97,7 +97,7 @@ func (swm *StopWordsManager) IsStopWord(word string) bool {
 func (swm *StopWordsManager) RemoveStopWordsFromASlice(words []string) []string {
 	filtered_list := []string{}
 	for _, word := range words {
-		if !swm.IsStopWord(word) {
+		if !swm.IsStopWord(strings.ToLower(word)) {
 			filtered_list = append(filtered_list, word)
 		}
 	}
